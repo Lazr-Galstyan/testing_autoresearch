@@ -31,16 +31,30 @@ E-commerce churn dataset. Links TBD — will be added to `data/README.md` once p
 - Autoresearch project: link TBD
 - Dataset source: link TBD
 
-## Coding Conventions
+## Comparison Axes
+| Dimension | Metric |
+|---|---|
+| Predictive performance | AUC-ROC, F1, precision/recall on held-out test set |
+| Efficiency | Time-to-result (wall clock) |
+| Effort | Lines of code, manual decisions required |
 
+## Coding Conventions
 - Python 3.10+
-- Dependencies managed with `requirements.txt` or `pyproject.toml`
-- All experiments should be reproducible: set random seeds explicitly (`RANDOM_SEED = 42`)
-- Store metrics as JSON in `results/` so they can be compared programmatically
-- Notebooks are for exploration only; production-ready code lives in `.py` modules
+- Dependencies: `requirements.txt` or `pyproject.toml`
+- Always set `RANDOM_SEED = 42` explicitly — reproducibility is non-negotiable
+- Store all metrics as JSON in `results/` for programmatic comparison
+- Use `pathlib.Path` relative to project root — never hardcode paths
+- Notebooks for exploration only; production code in `.py` modules
+- Do not commit raw data files >5MB; document retrieval steps in `data/README.md`
+
+## How Claude Should Help
+- When writing new code, follow existing patterns in `traditional/` or `autoresearch/`
+- If asked to add a feature, also add the corresponding metric logging to `results/`
+- Prefer clarity over cleverness — this is benchmarking code, not production
+- When both pipelines need the same change (e.g. a new eval metric), apply it to both
+- Always evaluate on the held-out test set; never report validation metrics as final
 
 ## What to Avoid
-
-- Do not hardcode file paths — use `pathlib.Path` relative to the project root
-- Do not commit raw data files larger than a few MB; use `.gitignore` and document how to obtain them
-- Do not skip evaluation on the held-out test set when reporting final numbers
+- Do not mix autoresearch and traditional pipeline code
+- Do not skip the held-out test set when reporting final numbers
+- Do not add dependencies without updating `requirements.txt`
