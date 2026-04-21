@@ -17,12 +17,32 @@ Traditional ML workflows require significant manual effort: hand-crafted feature
 
 ## Dataset
 
-E-commerce customer churn data. *(Dataset link — TBD)*
+**[E-commerce Customer Data For Behavior Analysis](https://www.kaggle.com/datasets/shriyashjagtap/e-commerce-customer-for-behavior-analysis)**
+by Shriyash Jagtap on Kaggle.
+
+An e-commerce transaction dataset designed for customer churn prediction and behavior analysis. The target variable is binary churn (0 = retained, 1 = churned).
+
+| Column | Description |
+|---|---|
+| `Customer ID` | Unique customer identifier |
+| `Customer Name` | Synthetic customer name |
+| `Customer Age` | Age of the customer |
+| `Gender` | Customer gender |
+| `Purchase Date` | Timestamp of the transaction |
+| `Product Category` | Category of the purchased item |
+| `Product Price` | Price of the individual product |
+| `Quantity` | Units purchased per transaction |
+| `Total Purchase Amount` | Total transaction value |
+| `Payment Method` | Payment method used (e.g. credit card, PayPal) |
+| `Returns` | Whether the item was returned (0 = no, 1 = yes) |
+| `Churn` | **Target** — whether the customer churned (0 = retained, 1 = churned) |
+
+Churn is inferred from purchase frequency, recency, and platform interaction patterns.
 
 ## External References
 
 - Autoresearch project by Andrej Karpathy: *(link TBD)*
-- Dataset source: *(link TBD)*
+- Dataset: [Kaggle — E-commerce Customer Data For Behavior Analysis](https://www.kaggle.com/datasets/shriyashjagtap/e-commerce-customer-for-behavior-analysis)
 
 ## Project Structure
 
