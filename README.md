@@ -17,32 +17,26 @@ Traditional ML workflows require significant manual effort: hand-crafted feature
 
 ## Dataset
 
-**[E-commerce Customer Data For Behavior Analysis](https://www.kaggle.com/datasets/shriyashjagtap/e-commerce-customer-for-behavior-analysis)**
-by Shriyash Jagtap on Kaggle.
+**[Online Retail II](https://archive.ics.uci.edu/dataset/502/online+retail+ii)**
+from the UCI Machine Learning Repository (Daqing Chen, Chen et al. 2012).
 
-An e-commerce transaction dataset designed for customer churn prediction and behavior analysis. The target variable is binary churn (0 = retained, 1 = churned).
+Transactional records from a UK-based, registered non-store online retailer covering 2009-12-01 to 2011-12-09. Roughly 1.07M rows, one row per line item on an invoice. The dataset **does not include a churn label** — churn is defined downstream from the transactional history (rule TBD; see `notebooks/01_eda_raw.ipynb`).
 
 | Column | Description |
 |---|---|
-| `Customer ID` | Unique customer identifier |
-| `Customer Name` | Synthetic customer name |
-| `Customer Age` | Age of the customer |
-| `Gender` | Customer gender |
-| `Purchase Date` | Timestamp of the transaction |
-| `Product Category` | Category of the purchased item |
-| `Product Price` | Price of the individual product |
-| `Quantity` | Units purchased per transaction |
-| `Total Purchase Amount` | Total transaction value |
-| `Payment Method` | Payment method used (e.g. credit card, PayPal) |
-| `Returns` | Whether the item was returned (0 = no, 1 = yes) |
-| `Churn` | **Target** — whether the customer churned (0 = retained, 1 = churned) |
-
-Churn is inferred from purchase frequency, recency, and platform interaction patterns.
+| `Invoice` | Invoice number (6-digit). Prefixed with `C` for cancellations. |
+| `StockCode` | Product (item) code. |
+| `Description` | Product name. |
+| `Quantity` | Units of the product per transaction line. Negative for cancellations/returns. |
+| `InvoiceDate` | Invoice date and time. |
+| `Price` | Unit price in pounds sterling (£). |
+| `Customer ID` | 5-digit customer number. May be missing for guest / non-attributed transactions. |
+| `Country` | Country where the customer resides. |
 
 ## External References
 
 - Autoresearch project by Andrej Karpathy: *(link TBD)*
-- Dataset: [Kaggle — E-commerce Customer Data For Behavior Analysis](https://www.kaggle.com/datasets/shriyashjagtap/e-commerce-customer-for-behavior-analysis)
+- Dataset: [UCI Machine Learning Repository — Online Retail II](https://archive.ics.uci.edu/dataset/502/online+retail+ii)
 
 ## Project Structure
 
