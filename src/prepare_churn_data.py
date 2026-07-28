@@ -32,7 +32,7 @@ No other cleaning is applied — cancellations, zero prices and odd stock
 codes/descriptions are intentionally left in (see the EDA's data-quality issues).
 
 Run from anywhere:
-    python data/processing/prepare_churn_data.py
+    python src/prepare_churn_data.py
 
 Writes ``data/processed/first_transaction_churn.csv``.
 """
@@ -43,7 +43,7 @@ import pandas as pd
 RANDOM_SEED = 42
 CHURN_WINDOW_DAYS = 90
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RAW_FILE = PROJECT_ROOT / 'data' / 'raw' / 'online_retail_II.csv'
 PROCESSED_DIR = PROJECT_ROOT / 'data' / 'processed'
 OUT_FILE = PROCESSED_DIR / 'first_transaction_churn.csv'

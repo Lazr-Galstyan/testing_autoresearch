@@ -1,7 +1,7 @@
 """Build customer-level features from each customer's 1st purchase.
 
 Run from anywhere:
-    python conventional_approach/feature_engineering.py
+    python src/feature_engineering.py
 
 Writes data/processed/customers.csv.
 
