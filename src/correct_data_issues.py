@@ -4,7 +4,7 @@ Input is the first-transaction churn table produced by ``prepare_churn_data.py``
 (``data/processed/first_transaction_churn.csv``): one row per line item of each
 customer's **first** invoice, plus a per-customer ``churn`` label.
 
-Each of the 7 issues from the EDA is handled per the notebook's "Resolution plan":
+Each of the 8 issues from the EDA is handled per the notebook's "Resolution plan":
 
 1. Missing ``customer_id`` / ``description`` — already resolved upstream by the
    first-transaction filter (no such rows remain); nothing to do here.
@@ -20,7 +20,14 @@ Each of the 7 issues from the EDA is handled per the notebook's "Resolution plan
 7. Outliers                               — kept on purpose: the downstream model is
    tree-based and robust to extreme values; no step is needed.
 
-``correct_data_issues`` applies steps 2, 3, 5 and 6 in order and returns the
+8. Test products (``TEST*`` codes)       -> ``remove_test_products``. ``TEST001``
+   is letters+digits, so the issue-5 format check treats it as a valid product
+   variant and leaves it in. Three of its four rows happen to be removed by the
+   zero-price and cancellation steps, but one survives — and each of the 4 rows
+   is a customer's *entire* first transaction, so customer 12346 would reach the
+   modelling data as a wholly fabricated customer.
+
+``correct_data_issues`` applies steps 2, 3, 5, 6 and 8 in order and returns the
 cleaned frame.
 
 Run from anywhere:
@@ -44,6 +51,12 @@ OUT_FILE = PROCESSED_DIR / 'first_transaction_churn_clean.csv'
 # (postage, manual adjustments, bank charges, ...). Verified against the data
 # in the EDA notebook — these 7 codes account for all invalid-format rows.
 INVALID_STOCK_CODES = ['POST', 'M', 'D', 'ADJUST', 'PADS', 'DOT', 'BANK CHARGES']
+
+# Issue 8: prefix of the retailer's placeholder test records ('This is a test
+# product.'). The raw data holds TEST001 and TEST002; only TEST001 reaches the
+# first-transaction table. Matched by prefix so a regenerated table cannot let
+# TEST002 through unnoticed.
+TEST_STOCK_CODE_PREFIX = 'TEST'
 
 
 def remove_zero_prices(df: pd.DataFrame) -> pd.DataFrame:
@@ -113,17 +126,39 @@ def remove_cancellations(df: pd.DataFrame) -> pd.DataFrame:
     return df[~is_cancel].copy()
 
 
+def remove_test_products(
+    df: pd.DataFrame, prefix: str = TEST_STOCK_CODE_PREFIX
+) -> pd.DataFrame:
+    """Issue 8 — drop the retailer's placeholder test records.
+
+    Input:
+        ``df``: first-transaction frame with a ``stock_code`` column.
+        ``prefix``: stock-code prefix identifying test records (defaults to
+        ``TEST_STOCK_CODE_PREFIX``).
+    Does:
+        Removes rows whose ``stock_code`` starts with ``prefix`` (case-insensitive).
+        These are not real products, so a customer whose first transaction consists
+        only of them is dropped along with the rows.
+    Output:
+        A copy of ``df`` without the test-product rows.
+    """
+    is_test = df['stock_code'].astype(str).str.upper().str.startswith(prefix.upper())
+    return df[~is_test].copy()
+
+
 def correct_data_issues(df: pd.DataFrame) -> pd.DataFrame:
-    """Apply all corrections (issues 2, 3, 5, 6) and return the cleaned frame.
+    """Apply all corrections (issues 2, 3, 5, 6, 8) and return the cleaned frame.
 
     Order: remove cancellations -> remove zero prices -> remove invalid stock
-    codes -> normalize descriptions (computed on the surviving rows).
+    codes -> remove test products -> normalize descriptions (computed on the
+    surviving rows).
 
     Issues 1, 4 and 7 need no transformation (see the module docstring).
     """
     df = remove_cancellations(df)
     df = remove_zero_prices(df)
     df = remove_invalid_stock_codes(df)
+    df = remove_test_products(df)
     df = normalize_descriptions(df)
     return df
 

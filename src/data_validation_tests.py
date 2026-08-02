@@ -26,6 +26,7 @@ import pandas as pd
 from correct_data_issues import (
     INVALID_STOCK_CODES,
     IN_FILE,
+    TEST_STOCK_CODE_PREFIX,
     correct_data_issues,
 )
 
@@ -62,11 +63,21 @@ def validate_no_cancellations(clean: pd.DataFrame) -> None:
         raise DataValidationError(f'{n} cancellation rows still remain')
 
 
+def validate_no_test_products(clean: pd.DataFrame) -> None:
+    """Issue 8 — raise unless no ``TEST*`` placeholder stock code remains."""
+    is_test = (clean['stock_code'].astype(str).str.upper()
+               .str.startswith(TEST_STOCK_CODE_PREFIX.upper()))
+    n = int(is_test.sum())
+    if n:
+        raise DataValidationError(f'{n} test-product rows still remain')
+
+
 CHECKS = [
     validate_no_zero_prices,
     validate_consistent_descriptions,
     validate_no_invalid_stock_codes,
     validate_no_cancellations,
+    validate_no_test_products,
 ]
 
 
