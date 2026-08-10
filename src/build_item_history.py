@@ -99,6 +99,7 @@ Run from anywhere:
 """
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 RANDOM_SEED = 42
@@ -117,6 +118,16 @@ ITEM_COLUMNS = [
     'prior_median_daily_units',
     'prior_avg_price',
     'prior_median_daily_price',
+]
+
+# Line-vs-history ratios, added by add_history_ratios to a frame that already
+# carries the ITEM_COLUMNS. Each divides something about the current line by the
+# same quantity over the product's earlier trading.
+RATIO_COLUMNS = [
+    'qty_vs_median_daily_units',
+    'qty_share_of_prior_units',
+    'price_vs_prior_avg_price',
+    'price_vs_prior_median_daily_price',
 ]
 
 
@@ -193,6 +204,63 @@ def build_item_history(df: pd.DataFrame) -> pd.DataFrame:
     """
     daily = add_prior_metrics(daily_item_activity(df))
     return daily[ITEM_COLUMNS]
+
+
+def add_history_ratios(txn: pd.DataFrame) -> pd.DataFrame:
+    """Compare each line item against its own product's earlier trading.
+
+    Input:
+        ``txn``: a line-item frame with ``quantity`` and ``price`` that has
+        already had the item history merged onto it — i.e. it carries
+        ``prior_units``, ``prior_median_daily_units``, ``prior_avg_price`` and
+        ``prior_median_daily_price``.
+    Does:
+        Adds the four ``RATIO_COLUMNS``:
+
+        ``qty_vs_median_daily_units``
+            ``quantity / prior_median_daily_units``. Above 1 means this single
+            line moved more than the product's whole typical day.
+        ``qty_share_of_prior_units``
+            ``quantity / prior_units``. What fraction of everything ever sold of
+            this product is being bought right now.
+        ``price_vs_prior_avg_price``
+            ``price / prior_avg_price``. Above 1 is a premium over the level the
+            product usually sold at, below 1 is a discount.
+        ``price_vs_prior_median_daily_price``
+            ``price / prior_median_daily_price``. The same comparison against
+            the *median* daily price rather than the mean.
+
+        The two price ratios differ only in how the historical level is
+        summarised, and that difference is the point: the mean is dragged by a
+        one-off promotion or a single odd trading day, the median is not. They
+        agree for a product with a stable price and diverge for one whose
+        history contains outlier days, so the gap between them is itself a
+        signal about how erratically a product has been priced.
+
+        Denominators are guarded: ``prior_units`` is ``0`` on a product's first
+        appearance and the medians and means are ``NaN`` there, so every ratio
+        comes out ``NaN`` rather than infinite on a debut row.
+    Output:
+        A copy of ``txn`` with the four columns appended.
+    """
+    required = ['quantity', 'price', 'prior_units', 'prior_median_daily_units',
+                'prior_avg_price', 'prior_median_daily_price']
+    missing = [c for c in required if c not in txn.columns]
+    assert not missing, f'join the item history first — missing {missing}'
+
+    out = txn.copy()
+    out['qty_vs_median_daily_units'] = (
+        out['quantity'] / out['prior_median_daily_units'].replace(0, np.nan))
+    out['qty_share_of_prior_units'] = (
+        out['quantity'] / out['prior_units'].replace(0, np.nan))
+    out['price_vs_prior_avg_price'] = (
+        out['price'] / out['prior_avg_price'].replace(0, np.nan))
+    out['price_vs_prior_median_daily_price'] = (
+        out['price'] / out['prior_median_daily_price'].replace(0, np.nan))
+
+    for col in RATIO_COLUMNS:
+        assert not np.isinf(out[col]).any(), f'{col} has infinite values'
+    return out
 
 
 def check_item_history(items: pd.DataFrame, df: pd.DataFrame) -> None:
