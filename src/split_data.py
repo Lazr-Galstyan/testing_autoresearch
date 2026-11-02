@@ -5,7 +5,9 @@ unreduced ``emb_*`` columns). Output is, in ``data/processed/``:
 
 ``train.csv`` / ``test.csv``
     The same customer-grain, aggregate and ``pca_*`` columns in both. The 384
-    ``emb_*`` columns are replaced by ``pca_*`` columns.
+    ``emb_*`` columns are replaced by ``pca_*`` columns, and ``customer_id`` and
+    ``first_date`` are removed: ``churn`` is the label, everything else is a
+    feature. Rows keep the order they have in ``modelling_dataset.csv``.
 ``pca.joblib``
     The PCA fitted on the training rows, so any later customer can be projected
     onto the same axes.
@@ -57,6 +59,9 @@ TEST_FILE = PROCESSED_DIR / 'test.csv'
 PCA_FILE = PROCESSED_DIR / 'pca.joblib'
 SUMMARY_FILE = RESULTS_DIR / 'split_summary.json'
 
+# Used to build and check the split, but not features: removed from the outputs.
+ID_COLUMNS = ['customer_id', 'first_date']
+
 
 def time_split(dataset: pd.DataFrame, test_fraction: float = TEST_FRACTION):
     """Split customers into an earlier train set and a later test set.
@@ -89,7 +94,8 @@ def fit_and_apply_pca(train: pd.DataFrame, test: pd.DataFrame,
         ``pca.transform`` with those same components.
     Output:
         ``(train_out, test_out, pca)`` — the frames with ``emb_*`` replaced by
-        ``pca_*`` (in the same position), and the fitted ``PCA``.
+        ``pca_*`` (in the same position), ``ID_COLUMNS`` removed, and the fitted
+        ``PCA``.
     """
     reduced_train, pca = reduce_embeddings(train[EMBEDDING_COLUMNS].to_numpy(),
                                            variance=variance)
@@ -98,7 +104,8 @@ def fit_and_apply_pca(train: pd.DataFrame, test: pd.DataFrame,
 
     def swap(frame: pd.DataFrame, reduced: np.ndarray) -> pd.DataFrame:
         components = pd.DataFrame(reduced, columns=names, index=frame.index)
-        return pd.concat([frame.drop(columns=EMBEDDING_COLUMNS), components], axis=1)
+        return pd.concat([frame.drop(columns=EMBEDDING_COLUMNS + ID_COLUMNS),
+                          components], axis=1)
 
     return swap(train, reduced_train), swap(test, reduced_test), pca
 
@@ -122,14 +129,19 @@ def check_split(dataset: pd.DataFrame, train: pd.DataFrame, test: pd.DataFrame,
     assert list(train_out.columns) == list(test_out.columns), 'train/test columns differ'
     assert train_out.dtypes.equals(test_out.dtypes), 'train/test dtypes differ'
 
-    # Nothing but the embedding columns may change: every other column must equal
-    # the modelling table's value for the same customer.
-    plain = [c for c in dataset.columns if c not in EMBEDDING_COLUMNS]
+    assert not set(ID_COLUMNS) & set(train_out.columns), 'an id column survived (train)'
+    assert not set(ID_COLUMNS) & set(test_out.columns), 'an id column survived (test)'
+
+    # Nothing but the embedding and id columns may change: every other column must
+    # equal the modelling table's value for the same customer, row for row.
+    kept = [c for c in dataset.columns
+            if c not in EMBEDDING_COLUMNS and c not in ID_COLUMNS]
     original = dataset.set_index('customer_id')
     for part, out in ((train, train_out), (test, test_out)):
-        pd.testing.assert_frame_equal(out[plain].set_index('customer_id'),
-                                      original.loc[out['customer_id'], plain[1:]],
-                                      check_dtype=True)
+        pd.testing.assert_frame_equal(
+            out[kept].reset_index(drop=True),
+            original.loc[part['customer_id'], kept].reset_index(drop=True),
+            check_dtype=True)
     assert not any(c in train_out.columns for c in EMBEDDING_COLUMNS), \
         'raw embedding columns survived the reduction'
     names = pca_column_names(pca.n_components_)
