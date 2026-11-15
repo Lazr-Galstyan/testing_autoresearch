@@ -14,3 +14,9 @@ __pycache__/
 
 # OS
 .DS_Store
+
+# autoresearch run artefacts
+autoresearch/results.tsv
+autoresearch/research-log.md
+autoresearch/run.log
+autoresearch/best_train.py
