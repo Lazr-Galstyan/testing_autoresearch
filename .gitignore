@@ -17,4 +17,3 @@ __pycache__/
 
 # autoresearch run artefacts
 autoresearch/run.log
-autoresearch/best_train.py

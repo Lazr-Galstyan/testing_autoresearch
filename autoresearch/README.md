@@ -21,8 +21,8 @@ When the experiment budget is spent, a human runs `final_eval.py` once. It fits 
 | `train.py` | the agent | `make_features(X_fit, X_apply)` and `make_model()`; running it prints the fold AUCs and the CV AUC. |
 | `program.md` | the human | The agent's instructions: setup, allowed and forbidden actions, the loop, logging. |
 | `final_eval.py` | nobody (human-only) | Fits on all of train, evaluates once on test, writes `results/autoresearch_shared_features.json`. The agent must not read or run it. |
-| `results.tsv`, `research-log.md` | the agent | Per-experiment log and reasoning log. Tracked in git. |
-| `best_train.py`, `run.log` | the agent | Backup of the best `train.py` and the latest run output. Git-ignored. |
+| `results.tsv`, `research-log.md`, `best_train.py` | the agent | Per-experiment log, reasoning log, and backup of the best `train.py`. Tracked in git. |
+| `run.log` | the agent | Latest run output. Git-ignored. |
 
 ## How an experiment runs
 
