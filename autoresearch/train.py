@@ -9,9 +9,21 @@ Keep ALL feature engineering inside ``make_features`` (no helpers elsewhere that
 ``final_eval.py`` would not pick up). Anything learned from data must be learned
 from ``X_fit`` only and applied to ``X_apply``.
 """
-import xgboost as xgb
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import VotingClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import QuantileTransformer
 
 from prepare import RANDOM_SEED, run_cv
+
+CORE_FEATURES = [
+    'total_spend', 'total_quantity', 'n_distinct_products', 'n_lines',
+    'prior_median_daily_transactions_mean', 'prior_median_daily_transactions_max',
+    'prior_median_daily_units_mean', 'prior_median_daily_units_max',
+    'avg_unit_price', 'day_of_month', 'hour',
+]
 
 
 def make_features(X_fit, X_apply):
@@ -19,14 +31,21 @@ def make_features(X_fit, X_apply):
 
 
 def make_model():
-    return xgb.XGBClassifier(
-        n_estimators=100,
-        max_depth=6,
-        learning_rate=0.1,
-        eval_metric='auc',
-        random_state=RANDOM_SEED,
-        n_jobs=-1,
+    linear = make_pipeline(
+        SimpleImputer(strategy='median'),
+        QuantileTransformer(output_distribution='normal', n_quantiles=200,
+                            random_state=RANDOM_SEED),
+        LogisticRegression(C=0.3, max_iter=2000),
     )
+    core = make_pipeline(
+        ColumnTransformer([('core', 'passthrough', CORE_FEATURES)]),
+        SimpleImputer(strategy='median'),
+        QuantileTransformer(output_distribution='normal', n_quantiles=200,
+                            random_state=RANDOM_SEED),
+        LogisticRegression(C=10.0, max_iter=2000),
+    )
+    return VotingClassifier([('wide', linear), ('core', core)], voting='soft',
+                            weights=[1.0, 4.0])
 
 
 if __name__ == '__main__':
