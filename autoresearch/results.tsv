@@ -1,0 +1,101 @@
+experiment	model	modification	CV_AUC	cv_seconds	status
+1	XGBClassifier(n_estimators=100, max_depth=6, learning_rate=0.1, eval_metric='auc')	baseline	0.5712	2.2	keep
+2	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=10)	shallow, slow, subsampled XGB (regularisation)	0.5974	2.0	keep
+3	XGBClassifier(n_estimators=600, max_depth=2, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=10)	max_depth 3->2, n_estimators 400->600	0.5974	2.0	discard
+4	XGBClassifier(n_estimators=800, max_depth=3, learning_rate=0.015, subsample=0.8, colsample_bytree=0.5, min_child_weight=10)	learning_rate 0.03->0.015, n_estimators 400->800	0.5939	3.6	discard
+5	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.3, min_child_weight=10)	colsample_bytree 0.5->0.3	0.5933	1.7	discard
+6	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=30)	min_child_weight 10->30	0.5987	1.8	keep
+7	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=60)	min_child_weight 30->60	0.6023	1.7	keep
+8	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=30, reg_lambda=10)	reg_lambda 1->10 (NOTE: ran with min_child_weight=30, not best 60, by mistake)	0.6010	1.9	discard
+9	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=30, gamma=1.0)	gamma 0->1.0 (NOTE: ran with min_child_weight=30, not best 60, by mistake)	0.5987	1.8	discard
+10	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=60, reg_lambda=10)	reg_lambda 1->10 (on the true best, min_child_weight=60)	0.6024	1.8	keep
+11	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=60, reg_lambda=10)	drop all 93 pca_* columns	0.6013	0.8	discard
+12	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=60, reg_lambda=10)	drop year column	0.6035	1.7	keep
+13	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=60, reg_lambda=10)	also drop month column	0.6018	1.7	discard
+14	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=60, reg_lambda=10)	add spend_per_line, units_per_line, distinct_share	0.6029	1.8	discard
+15	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=60, reg_lambda=10)	keep only pca_00..pca_19 (drop pca_20..pca_92)	0.5941	1.0	discard
+16	XGBClassifier(n_estimators=400, max_depth=3, learning_rate=0.03, subsample=0.8, colsample_bytree=0.5, min_child_weight=60, reg_lambda=10, colsample_bynode=0.5)	add colsample_bynode=0.5	0.6037	1.6	keep
+17	VotingClassifier(soft; XGB best + QuantileTransformer->LogisticRegression(C=0.01))	soft-vote blend with regularised logistic regression	0.0000	0.0	crash
+18	VotingClassifier(soft; XGB best + SimpleImputer(median,indicator)->QuantileTransformer(normal)->LogisticRegression(C=0.01))	XGB+LR soft blend, NaN fixed with median imputer + missing indicators	0.6141	2.3	keep
+19	VotingClassifier(soft; XGB best + Imputer->Quantile->LogisticRegression(C=0.003))	LR C 0.01->0.003	0.6154	2.3	keep
+20	VotingClassifier(soft; XGB best + Imputer->Quantile->LogisticRegression(C=0.003))	NO-OP: intended LR C->0.001 but the edit failed, so the unchanged best was re-run (reproducibility check)	0.6154	2.2	discard
+21	VotingClassifier(soft; XGB best + Imputer->Quantile->LogisticRegression(C=0.001))	LR C 0.003->0.001	0.6152	2.2	discard
+22	ZBlend(XGB best + Imputer->Quantile->LogisticRegression(C=0.003), weights=[1,1])	z-scored-logit 50/50 blend replaces probability soft-vote	0.6157	2.6	keep
+23	ZBlend(XGB best + Imputer->Quantile->LogisticRegression(C=0.003), weights=[1,2])	blend weights 1:1 -> 1:2 (more LR)	0.6161	2.5	keep
+24	ZBlend weights=[0,1] (LogisticRegression(C=0.003) only)	ablation: LR alone, XGB weight 0	0.6138	2.5	discard
+25	ZBlend(XGB best + Imputer->Quantile->SplineTransformer(n_knots=4,degree=3)->LogisticRegression(C=0.003), weights=[1,2])	add spline basis to LR branch (GAM-like)	0.6139	3.6	discard
+26	ZBlend(XGB best + Imputer->Quantile->LogisticRegression(penalty=l1, liblinear, C=0.05), weights=[1,2])	LR penalty L2(C=0.003) -> L1(C=0.05)	0.6134	2.7	discard
+27	ZBlend(XGB best, LR(C=0.003), RandomForest(n_estimators=300, min_samples_leaf=30, max_features=0.3); weights=[1,2,1])	add RandomForest as third blend member	0.6186	8.2	keep
+28	ZBlend(XGB best, LR(C=0.003), RF(300, leaf=30, max_features=0.3); weights=[1,2,2])	RF blend weight 1->2	0.6187	8.5	keep
+29	ZBlend(XGB best, LR(C=0.003), RF(300, leaf=30, max_features='sqrt'); weights=[1,2,2])	RF max_features 0.3->sqrt	0.6187	4.5	discard
+30	ZBlend(XGB best, LR(C=0.003), RF(300, leaf=30, mf=0.3), ExtraTrees(300, leaf=30, mf=0.3); weights=[1,2,2,1])	add ExtraTrees as 4th member	0.6181	10.2	discard
+31	ZBlend(XGB best, LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	add cyclic month_sin/month_cos features	0.6157	8.3	discard
+32	ZBlend(XGB best, LR(C=0.003), RF(300, leaf=30, mf=0.3), kNN(k=150, quantile features); weights=[1,2,2,1])	add k-NN as 4th member	0.6175	9.6	discard
+33	ZBlend(XGB(400, depth=4, lr=0.03, sub=0.8, col_tree=0.5, col_node=0.5, mcw=60, lambda=10), LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	XGB max_depth 3->4	0.6188	8.6	keep
+34	ZBlend(XGB depth4, LR(C=0.003, imputer without indicators), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	ablation: remove missing indicators from LR imputer	0.6185	8.7	discard
+35	ZBlend(XGB depth4, LR(C=0.003), RF(300, leaf=15, mf=0.3); weights=[1,2,2])	RF min_samples_leaf 30->15	0.6171	10.1	discard
+36	ZBlend(XGB depth4, LR(C=0.003), RF(300, leaf=60, mf=0.3); weights=[1,2,2])	RF min_samples_leaf 30->60	0.6173	7.7	discard
+37	ZBlend(XGB depth4, LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2]) + sample_weight=exp(-age_months/12)	exponential recency sample weights, tau=12 months	0.6171	8.6	discard
+38	ZBlend(XGB depth4, LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2]) + sample_weight=exp(-age_months/36)	recency sample weights, tau=36 months	0.6179	8.6	discard
+39	ZBlend(XGB depth4, LR(C=0.003), RF(300, leaf=30, mf=0.3, oob_score=True); weights=[1,2,2])	z-score RF via out-of-bag predictions	0.6187	8.9	discard
+40	ZBlend(XGB depth4, LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	drop the 13 *_sum aggregate columns	0.6181	8.1	discard
+41	ZBlend(XGB depth4, LR(C=0.003, QuantileTransformer n_quantiles=1000), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	LR quantile resolution 200->1000	0.6188	10.3	discard
+42	ZBlend(XGB(250, depth=4, lr=0.03, sub=0.8, col_tree=0.5, col_node=0.5, mcw=60, lambda=10), LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	XGB n_estimators 400->250	0.6189	8.1	keep
+43	ZBlend(XGB(150, depth=4, lr=0.03, sub=0.8, col_tree=0.5, col_node=0.5, mcw=60, lambda=10), LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	XGB n_estimators 250->150	0.6192	7.6	keep
+44	ZBlend(XGB(80, depth=4, ...), LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	XGB n_estimators 150->80	0.6186	7.3	discard
+45	ZBlend(XGB(150, depth=5, ...), LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	XGB max_depth 4->5	0.6188	7.8	discard
+46	ZBlend(ResidualBoost(LR -> XGB(150, depth4) with base_margin), LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	XGB member boosts from LR logit (residual boosting) instead of from scratch	0.6184	8.8	discard
+47	ZBlend(SeedBag(XGB(150, depth4), 5 seeds), LR(C=0.003), RF(300, leaf=30, mf=0.3); weights=[1,2,2])	average XGB member over 5 seeds	0.6190	10.8	discard
+48	ZBlend(XGB(150, depth4), LR(C=0.003), RF(300, leaf=30, mf=0.3), coreLR(8 basket features, C=1); weights=[1,2,2,1])	add core LR member on 8 strongest basket features (EDA on fold-1 train window)	0.6224	7.6	keep
+49	ZBlend(XGB(150, depth4), LR(C=0.003), RF(300, leaf=30, mf=0.3), coreLR(8 feats, C=1); weights=[1,2,2,2])	core LR weight 1->2	0.6242	7.8	keep
+50	ZBlend(XGB(150, depth4), LR(C=0.003), RF(300, leaf=30, mf=0.3), coreLR(8 feats, C=1); weights=[1,2,2,4])	core LR weight 2->4	0.6253	7.6	keep
+51	ZBlend(XGB(150, depth4), LR(C=0.003), RF(300, leaf=30, mf=0.3), coreLR(8 feats, C=1); weights=[1,2,2,8])	core LR weight 4->8	0.6256	7.6	keep
+52	ZBlend weights=[0,0,0,1] (coreLR(8 feats, C=1) only)	ablation: core LR alone	0.6230	7.9	discard
+53	ZBlend(XGB, LR, RF, coreLR(11 feats, C=1); weights=[1,2,2,8])	core + qty_share_of_prior_units_sum, prior_median_daily_transactions_sum, prior_median_daily_units_sum	0.6256	7.8	discard
+54	ZBlend(XGB, LR, RF, coreLR(10 feats, C=1); weights=[1,2,2,8])	core + avg_unit_price, day_of_month	0.6280	7.7	keep
+55	ZBlend(XGB, LR, RF, coreLR(12 feats, C=1); weights=[1,2,2,8])	core + prior_transactions_mean, prior_units_min	0.6250	7.7	discard
+56	ZBlend(XGB, LR, RF, coreLR(10 feats, C=0.1); weights=[1,2,2,8])	core LR C 1.0->0.1	0.6258	7.9	discard
+57	ZBlend(XGB, LR, RF, coreLR(13 feats, C=1); weights=[1,2,2,8])	core + pca_17, pca_46, pca_01	0.6217	7.7	discard
+58	ZBlend(XGB, LR, RF, coreLR(10 feats, Yeo-Johnson PowerTransformer, C=1); weights=[1,2,2,8])	core transform Quantile-normal -> Yeo-Johnson	0.6275	7.5	discard
+59	ZBlend(XGB, LR, RF, coreLR(9 feats, no n_lines, C=1); weights=[1,2,2,8])	ablation: core minus n_lines	0.6260	7.7	discard
+60	ZBlend(XGB, LR, RF, coreLR(11 feats incl. hour, C=1); weights=[1,2,2,8])	core + hour	0.6282	8.4	keep
+61	ZBlend(XGB, LR, RF, coreLR(13 feats incl. units_per_line, spend_per_line, C=1); weights=[1,2,2,8])	core + units_per_line, spend_per_line ratios	0.6277	7.7	discard
+62	ZBlend(XGB, LR, RF, coreLR; weights=[1,0,2,8])	ablation: wide LR weight 2->0	0.6272	7.5	discard
+63	ZBlend(XGB, LR, RF, coreLR, coreXGB(11 core feats, 200, depth3, lr0.03, mcw60, lambda10); weights=[1,2,2,8,2])	add XGB on core features only as 5th member	0.6266	7.8	discard
+64	ZBlend(XGB, LR, RF, coreLR, corePairsLR(quantile->PolynomialFeatures(2, interaction_only)->StandardScaler->LR(C=0.05)); weights=[1,2,2,8,2])	add pairwise-interaction core LR as 5th member (DISCARDED on simplicity: +0.0006 from fold 4 only, folds 1-3 down, +10 lines)	0.6288	7.5	discard
+65	ZBlend(XGB, LR, RF, coreLR(11 feats, C=1, class_weight=balanced); weights=[1,2,2,8])	core LR class_weight=balanced	0.6283	8.0	keep
+66	ZBlend(XGB, LR, RF, coreLR(12 feats incl. is_international); weights=[1,2,2,8])	core + is_international flag (DISCARDED on simplicity: +0.0003, folds split 2 up / 2 down, +5 lines)	0.6286	7.8	discard
+67	ZBlend(XGB, LR(C=0.01), RF, coreLR(balanced); weights=[1,2,2,8])	wide LR C 0.003->0.01	0.6290	7.7	keep
+68	ZBlend(XGB, LR(C=0.03), RF, coreLR(balanced); weights=[1,2,2,8])	wide LR C 0.01->0.03	0.6293	8.1	keep
+69	ZBlend(XGB, LR(C=0.1), RF, coreLR(balanced); weights=[1,2,2,8])	wide LR C 0.03->0.1	0.6294	7.8	keep
+70	ZBlend(XGB, LR(C=0.1), RF, coreLR(balanced); weights=[1,4,2,8])	wide LR blend weight 2->4	0.6296	7.8	keep
+71	ZBlend(XGB, LR(C=0.1), RF, coreLR(12 feats incl. month); weights=[1,4,2,8])	core + month	0.6293	7.9	discard
+72	ZBlend(XGB, LR(C=0.1), RF, coreLR; weights=[0,4,2,8])	ablation: XGB member weight 1->0	0.6298	8.0	keep
+73	ZBlend(wideLR(quantile, C=0.1), RF(300, leaf=30, mf=0.3), coreLR(11 feats, C=1, balanced); weights=[4,2,8])	remove XGB member code entirely (simplification; identical AUC, kept per program.md 'equal AUC with less code is a win')	0.6298	6.9	keep
+74	ZBlend(wideLR, RF, coreLR; weights=[4,4,8])	RF blend weight 2->4	0.6292	7.3	discard
+75	ZBlend(wideLR, RF, coreLR; weights=[4,1,8])	RF blend weight 2->1	0.6300	7.1	keep
+76	ZBlend(wideLR, RF, coreLR; weights=[4,0,8])	ablation: RF weight 1->0 (linear only)	0.6299	7.2	discard
+77	ZBlend(wideLR(quantile, C=0.1), coreLR(11 feats, C=1, balanced); weights=[1,2])	remove RF member code entirely: two logistic regressions only (simplification; 0.6299 vs 0.6300 treated as equal, 6x faster, kept per program.md simplicity rule)	0.6299	1.1	keep
+78	ZBlend(wideLR(C=0.1), coreLR(C=1, balanced); weights=[1,3])	blend weights wide:core 1:2 -> 1:3	0.6305	1.1	keep
+79	ZBlend(wideLR(C=0.1), coreLR(C=1, balanced); weights=[1,5])	blend weights 1:3 -> 1:5	0.6305	1.1	discard
+80	ZBlend(wideLR(non-core columns only, C=0.1), coreLR; weights=[1,3])	wide LR excludes core features (orthogonal views)	0.6305	1.0	discard
+81	LogisticRegression(C=0.1) on quantile-normal features, core columns scaled x3 (single model, no blend)	replace 2-LR blend with one LR using differential shrinkage via column scaling (k=3)	0.6051	0.9	discard
+82	LogisticRegression(C=0.003) on quantile-normal features, core columns scaled x18 (single model)	single-LR differential shrinkage with bulk C=0.003, core effective C~1	0.6199	1.0	discard
+83	ZBlend(wideLR(C=0.1), coreLR(C=1); weights=[1,3])	remove class_weight=balanced from core LR (simplification; equal AUC, kept per program.md)	0.6305	1.1	keep
+84	ZBlend(wideLR(C=0.1, incl. year), coreLR(C=1); weights=[1,3])	keep year (make_features = identity)	0.6313	1.2	keep
+85	ZBlend(wideLR(median imputer, no indicators, C=0.1), coreLR(C=1); weights=[1,3])	wide LR: drop missing indicators (simplification)	0.6314	1.0	keep
+86	ZBlend(wideLR(no indicators, C=0.1), coreLR(no indicators, C=1); weights=[1,3])	core LR: drop missing indicators (simplification)	0.6328	1.0	keep
+87	ZBlend(wideLR(C=0.3), coreLR(C=1); weights=[1,3])	wide LR C 0.1->0.3	0.6329	1.0	keep
+88	ZBlend(wideLR(C=0.3), coreLR(C=10); weights=[1,3])	core LR C 1->10	0.6334	1.0	keep
+89	ZBlend(wideLR(C=0.3), coreLR(penalty=None); weights=[1,3])	core LR unpenalised	0.6334	1.0	discard
+90	ZBlend(wideLR(C=0.3), coreLR(C=10); weights=[1,2])	blend weights 1:3 -> 1:2	0.6332	1.0	discard
+91	ZBlend(wideLR, coreLR, contentLR(pca_* only, C=0.01); weights=[1,3,1])	add LR on PCA content columns as 3rd member	0.6308	1.0	discard
+92	ZBlend(wideLR(one-hot cols passthrough, rest imputed+quantile, C=0.3), coreLR(C=10); weights=[1,3])	wide LR: keep 30 one-hot columns as 0/1 instead of quantile-normalising them	0.6329	0.9	discard
+93	ZBlend(wideLR(C=0.3), coreLR(12 feats incl. year, C=10); weights=[1,3])	core + year	0.6320	1.0	discard
+94	ZBlend(wideLR(C=0.3), coreLR(10 feats, no hour, C=10); weights=[1,3])	ablation: core minus hour	0.6330	1.0	discard
+95	ZBlend(wideLR(C=0.3), coreLR(10 feats, no day_of_month, C=10); weights=[1,3])	ablation: core minus day_of_month	0.6286	1.0	discard
+96	ZBlend(wideLR(C=0.3), coreLR(10 feats, no avg_unit_price, C=10); weights=[1,3])	ablation: core minus avg_unit_price	0.6328	1.0	discard
+97	VotingClassifier(soft, weights=[1,3]; wideLR(C=0.3), coreLR(C=10))	replace custom ZBlend with sklearn VotingClassifier (simplification; 0.6333 vs 0.6334 treated as equal, -25 lines; same standard as exp 77)	0.6333	0.7	keep
+98	VotingClassifier(soft, weights=[1,4]; wideLR(C=0.3), coreLR(C=10))	blend weights 1:3 -> 1:4	0.6335	0.7	keep
+99	VotingClassifier(soft, weights=[1,6]; wideLR(C=0.3), coreLR(C=10))	blend weights 1:4 -> 1:6	0.6330	0.7	discard
+100	VotingClassifier(soft, weights=[1,4]; wideLR(C=1.0), coreLR(C=10))	wide LR C 0.3->1.0	0.6334	0.8	discard
