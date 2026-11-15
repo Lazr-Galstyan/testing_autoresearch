@@ -17,3 +17,4 @@ __pycache__/
 
 # autoresearch run artefacts
 autoresearch/run.log
+autoresearch_raw_data/run.log
