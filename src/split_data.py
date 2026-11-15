@@ -5,9 +5,11 @@ unreduced ``emb_*`` columns). Output is, in ``data/processed/``:
 
 ``train.csv`` / ``test.csv``
     The same customer-grain, aggregate and ``pca_*`` columns in both. The 384
-    ``emb_*`` columns are replaced by ``pca_*`` columns, and ``customer_id`` and
-    ``first_date`` are removed: ``churn`` is the label, everything else is a
-    feature. Rows keep the order they have in ``modelling_dataset.csv``.
+    ``emb_*`` columns are replaced by ``pca_*`` columns, and ``customer_id`` is
+    removed. ``churn`` is the label and ``first_date`` is kept only so that
+    time-ordered cross-validation can order the training rows: it is not a
+    feature and must be dropped before fitting. Rows keep the order they have in
+    ``modelling_dataset.csv``.
 ``pca.joblib``
     The PCA fitted on the training rows, so any later customer can be projected
     onto the same axes.
@@ -59,8 +61,8 @@ TEST_FILE = PROCESSED_DIR / 'test.csv'
 PCA_FILE = PROCESSED_DIR / 'pca.joblib'
 SUMMARY_FILE = RESULTS_DIR / 'split_summary.json'
 
-# Used to build and check the split, but not features: removed from the outputs.
-ID_COLUMNS = ['customer_id', 'first_date']
+# An identifier, not a feature: removed from the outputs.
+ID_COLUMNS = ['customer_id']
 
 
 def time_split(dataset: pd.DataFrame, test_fraction: float = TEST_FRACTION):

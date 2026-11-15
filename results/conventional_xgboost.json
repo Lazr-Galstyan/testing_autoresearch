@@ -1,0 +1,60 @@
+{
+  "approach": "conventional_xgboost",
+  "random_seed": 42,
+  "tuner": "optuna TPE",
+  "n_trials": 100,
+  "cv": {
+    "type": "time-ordered expanding window",
+    "train_fractions": [
+      0.6,
+      0.7,
+      0.8,
+      0.9
+    ],
+    "fold_train_sizes": [
+      2421,
+      2824,
+      3227,
+      3632
+    ],
+    "fold_validation_sizes": [
+      1614,
+      1211,
+      808,
+      403
+    ],
+    "objective": "mean validation AUC-ROC",
+    "best_mean_auc": 0.6081536230623565,
+    "best_fold_aucs": [
+      0.5961155432020087,
+      0.6024009603841537,
+      0.6208649059564972,
+      0.6132330827067669
+    ]
+  },
+  "best_params": {
+    "n_estimators": 333,
+    "max_depth": 3,
+    "learning_rate": 0.013232655521568087,
+    "subsample": 0.7299443780577844,
+    "colsample_bytree": 0.8644237416506,
+    "min_child_weight": 4,
+    "reg_alpha": 2.400139652900375,
+    "reg_lambda": 0.0009163109089092769
+  },
+  "test_metrics": {
+    "threshold": 0.5,
+    "accuracy": 0.595639246778989,
+    "precision": 0.5903614457831325,
+    "recall": 0.5903614457831325,
+    "f1": 0.5903614457831325,
+    "auc_roc": 0.611278774589552,
+    "tn": 307,
+    "fp": 204,
+    "fn": 204,
+    "tp": 294
+  },
+  "train_size": 4035,
+  "test_size": 1009,
+  "n_features": 173
+}
