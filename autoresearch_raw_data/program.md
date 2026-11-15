@@ -23,7 +23,7 @@ and no customer table. 4,035 customers, 99,830 lines. Higher AUC-ROC is better.
 2. `git checkout -b autoresearch_raw_data/<tag>` from the current HEAD.
 3. Read `autoresearch_raw_data/prepare.py` (fixed harness) and `autoresearch_raw_data/train.py` (yours).
 4. Verify `data/processed/raw_train.csv` exists; if not, tell the human to run `python autoresearch_raw_data/build_data.py`.
-5. Create `autoresearch_raw_data/results.tsv` with only the header row.
+5. Create `autoresearch_raw_data/results.tsv` with only the header row (all seven columns, see Logging).
 6. Run the unmodified `train.py` first to record the baseline (experiment 1), copy it to
    `autoresearch_raw_data/best_train.py`, then start the loop.
 
@@ -98,11 +98,17 @@ over 2 minutes.
 `autoresearch_raw_data/results.tsv`, tab-separated, header + one row per experiment:
 
 ```
-experiment	model	modification	CV_AUC	cv_seconds	status
+experiment	model	variables	modification	CV_AUC	cv_seconds	status
 ```
 
 - `experiment`: 1 to 100.
 - `model`: the XGBoost model and its hyperparameters as run.
+- `variables`: the COMPLETE list of the features (the columns of the customer table
+  returned by `make_features`) that the model used in this experiment, comma-separated
+  and written out by name, not summarised (e.g. `n_lines, total_spend, recency_days, ...`).
+  List every feature of this experiment, not only the new ones, and fill it in for
+  every row, including the baseline, discards and crashes (for a crash, list what the
+  code was meant to create). Write it from the code you actually ran.
 - `modification`: what you changed relative to the best version so far (feature
   engineering, parameters, etc.). For the baseline, write `baseline`.
 - `CV_AUC`: the mean CV AUC (0.0000 for crashes).
@@ -127,7 +133,7 @@ Nothing is committed. To be able to undo a bad change, keep
 3. Run it and read the CV AUC.
 4. Higher than the best so far: `keep`; copy `train.py` over `best_train.py`.
    Equal or lower: `discard`; copy `best_train.py` back over `train.py`.
-5. Append the row to `results.tsv` and the entry to `research-log.md`.
+5. Append the row to `results.tsv` (with the model and the complete variable list) and the entry to `research-log.md`.
 6. Every 10 experiments, pause to synthesise what works and what does not, then continue.
 
 After experiment 100, make sure `train.py` holds the best version, then stop and report:
