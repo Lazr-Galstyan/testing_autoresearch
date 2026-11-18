@@ -1,0 +1,30 @@
+{
+  "random_seed": 42,
+  "split": "time-ordered on first_date",
+  "test_fraction_requested": 0.2,
+  "cutoff": "2010-11-30 16:29:00",
+  "train": {
+    "rows": 4035,
+    "first_date_min": "2009-12-01 07:45:00",
+    "first_date_max": "2010-11-30 13:23:00",
+    "churn_rate": 0.44708798017348206
+  },
+  "test": {
+    "rows": 1009,
+    "first_date_min": "2010-11-30 16:29:00",
+    "first_date_max": "2011-09-09 14:14:00",
+    "churn_rate": 0.49355797819623387
+  },
+  "one_hot_columns": 21,
+  "one_hot_all_zero_in_train": [],
+  "one_hot_all_zero_in_test": [
+    "weekday_5",
+    "country_Netherlands"
+  ],
+  "pca": {
+    "fitted_on": "train",
+    "variance_target": 0.9,
+    "n_components": 93,
+    "variance_explained": 0.9004647592077288
+  }
+}
