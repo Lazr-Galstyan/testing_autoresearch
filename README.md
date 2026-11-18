@@ -31,6 +31,23 @@ Four pipelines are benchmarked on the same customers, the same time-ordered trai
 
 ## Results
 
+### Test AUC-ROC by approach
+
+The final score of each approach on the held-out test set (1,009 customers), evaluated once after tuning:
+
+| Rank | Approach | Test AUC-ROC | Difference from conventional |
+|---|---|---|---|
+| 1 | 1. Conventional XGBoost | 0.6113 | n/a |
+| 2 | 2. Autoresearch, shared features | 0.6110 | -0.0003 |
+| 3 | 2b. Autoresearch, shared features, XGBoost only | 0.6084 | -0.0029 |
+| 4 | 3. Autoresearch, raw data | 0.6054 | -0.0059 |
+
+![Test AUC-ROC by approach](results/test_auc_by_approach.png)
+
+The ranking is not meaningful: with 1,009 test customers, differences of a few thousandths of AUC are within the noise, and each approach is a single run. The bar chart's axis starts at 0.58, so the bars exaggerate the gaps.
+
+### Full results
+
 | Approach | Best CV AUC | Test AUC-ROC | Test F1 | Features |
 |---|---|---|---|---|
 | 1. Conventional XGBoost | 0.6082 | 0.6113 | 0.5904 | 173 |
@@ -83,7 +100,6 @@ testing_autoresearch/
 ├── autoresearch/           # Approach 2: agent harness, train.py, program.md, results.tsv, research-log.md
 ├── autoresearch_xgboost_only/  # Approach 2b: same as 2 with an XGBoost-only rule
 ├── autoresearch_raw_data/  # Approach 3: agent on raw first-invoice line items
-├── notebooks/              # EDA, data-quality checks, feature-engineering walkthrough
 ├── results/                # Metrics as JSON and the results chart
 └── README.md
 ```
